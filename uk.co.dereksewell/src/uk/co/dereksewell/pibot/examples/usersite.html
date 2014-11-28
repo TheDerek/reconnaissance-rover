@@ -1,0 +1,236 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>Robot controller</title>
+    <script type="text/javascript" src="http://www.melonjs.org/build/melonJS-0.9.4-min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.0.min.js"></script>
+    <meta charset="UTF-8"/>
+    <style type="text/css">
+        h1 {
+            text-align: center;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .response {
+            color: blue;
+        }
+
+        fieldset {
+            width: 80%;
+            margin: auto;
+            text-align: center;
+            -moz-box-shadow: 10px 10px 10px #000000;
+            -webkit-box-shadow: 10px 10px 10px #000000;
+        }
+
+        #output {
+            font-family: monospace;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 1em;
+            background-color: #eeeeee;
+            padding: 1em;
+            border: 5px groove #cccccc;
+            -moz-border-radius: 15px;
+            -webkit-border-radius: 15px;
+            -moz-box-shadow: 10px 10px 10px #000000;
+            -webkit-box-shadow: 10px 10px 10px #000000;
+        }
+    </style>
+
+    <script language="javascript" type="text/javascript">
+
+        var output;
+        var websocket;
+        function init() {
+            output = document.getElementById("output");
+        } // end init
+        function connect() {
+            //open socket
+            if ("WebSocket" in window) {
+                websocket = new WebSocket("ws://localhost:8888/ws");
+                //note this server does nothing but echo what was passed
+                //use a more elaborate server for more interesting behaviour
+
+                output.innerHTML = "connecting...";
+
+                //attach event handlers
+                websocket.onopen = onOpen;
+                websocket.onclose = onClose;
+                websocket.onmessage = onMessage;
+                websocket.onerror = onError;
+            } else {
+                alert("WebSockets not supported on your browser.");
+            } // end if
+        } // end connect
+        function onOpen(evt) {
+            //called as soon as a connection is opened
+			websocket.send("user")
+            output.innerHTML = "<p>CONNECTED TO SERVER</p>";
+        } // end onOpen
+        function onClose(evt) {
+            //called when connection is severed
+            output.innerHTML += "<p>DISCONNECTED</p>";
+        } // end onClose;
+        function onMessage(evt) {
+            //called on receipt of message
+            output.innerHTML += "<p class = 'response'>RESPONSE: "
+                    + evt.data + "</p>";
+            document.getElementById('output').scrollTop = 90000;
+            //resize();
+        } // end onMessage
+        function onError(evt) {
+            //called on error
+            output.innerHTML += "<p class = 'error'>ERROR: "
+                    + evt.data + "</p>";
+        } // end onError
+        function sendMessage() {
+            //get message from text field
+            txtMessage = document.getElementById("txtMessage");
+            message = txtMessage.value;
+            //pass message to server
+            websocket.send(message);
+            output.innerHTML += "<p>MESSAGE SENT: " + message + "</p>";
+        } // end sendMessage
+
+        function resize() {
+            // 200 is the total height of the other 2 divs
+            var height = document.getElementById('output').offsetHeight - 200;
+            document.getElementById('rest').style.height = height + 'px';
+        };
+
+
+
+
+        me.input.bindKey(me.input.KEY.A, "left");
+        me.input.bindKey(me.input.KEY.D, "right");
+        me.input.bindKey(me.input.KEY.W, "up");
+        me.input.bindKey(me.input.KEY.S, "down");
+        me.input.bindKey(me.input.KEY.F, "stop");
+
+        var motor1 = ""
+        var motor2 = ""
+        var preMotor1 = ""
+        var preMotor2 = ""
+
+
+        function loop() {
+
+            motor1 = ""
+            motor2 = ""
+            console.log("preMotor1 = " + preMotor1)
+            if (me.input.isKeyPressed('left'))
+            {
+                motor1 = "f 1 255"
+                motor2 = "b 2 255"
+                //websocket.send("f 1 255")
+                //websocket.send("b 2 255")
+            }
+
+            if (me.input.isKeyPressed('right'))
+            {
+                motor1 = "b 1 255"
+                motor2 = "f 2 255"
+               // websocket.send("b 1 255")
+                //websocket.send("f 2 255")
+
+            }
+
+            if (me.input.isKeyPressed('up'))
+            {
+                motor1 = "f 1 255"
+                motor2 = "f 2 255"
+                //websocket.send("f 1 255")
+                //websocket.send("f 2 255")
+            }
+
+            if (me.input.isKeyPressed('down'))
+            {
+                motor1 = "b 1 255"
+                motor2 = "b 2 255"
+
+                //websocket.send("b 1 255")
+                //websocket.send("b 2 255")
+            }
+
+            if (me.input.isKeyPressed('stop'))
+            {
+                motor1 = "r 1 255"
+                motor2 = "r 2 255"
+
+                //websocket.send("r 1 255")
+                //websocket.send("r 2 255")
+            }// else
+           // {
+            //    websocket.send("r 1 255")
+           //     websocket.send("r 2 255")
+           // }
+
+
+
+
+                 if(preMotor2 != motor2)
+                    websocket.send(motor2)
+
+                console.log("motor2 = " + motor2)
+
+
+
+
+
+                if(preMotor1 != motor1)
+                    websocket.send(motor1)
+
+
+
+
+
+
+            preMotor1 = motor1
+            preMotor2 = motor2
+
+
+        }
+
+         setInterval("loop()", 100);
+
+
+
+    </script>
+</head>
+<body onload="init()">
+<h1>Robot Controller</h1>
+
+<div id="header" style="position: relative">
+    <center><img src="images/cat_proximity.png"></center>
+    <form action="">
+        <fieldset>
+            <button type="button"
+            onclick="connect()">
+        connect to server
+    </button>
+    <label for="txtMessage">
+        <input type="text"
+               id="txtMessage"
+               value="Message"/>
+    </label>
+    <button type="button"
+            onclick="sendMessage()">
+        send message
+            </button>
+            <button type="button"
+                    onclick="websocket.close()">
+                disconnect
+            </button>
+        </fieldset>
+    </form>
+</div>
+<div id="output" class="content" style="position: relative; line-height: 0.1em; height: 20ex; overflow: hidden; ">Click
+    'connect' button to connect
+</div>
+</body>
+</html>

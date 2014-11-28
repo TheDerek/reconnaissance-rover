@@ -1,0 +1,7 @@
+xyzzz
+x = motor, 1 or 2
+y = type:
+	f = forwards
+	b = backwards
+	r = Release
+zzz = power from 0-255
